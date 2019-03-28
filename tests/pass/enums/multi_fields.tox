@@ -1,0 +1,9 @@
+enum List {
+    Head(i32,List),
+    Tail 
+}
+
+
+fn main() {
+
+}

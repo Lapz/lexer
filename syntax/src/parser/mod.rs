@@ -327,7 +327,6 @@ impl<'a> Parser<'a> {
 
             loop {
                 generic_param.push(self.consume_get_symbol("Expected an identifier")?);
-
                 if self.recognise(TokenType::COMMA) {
                     self.next()?;
                 } else {
@@ -358,44 +357,41 @@ impl<'a> Parser<'a> {
 
         let ident = self.parse_item_name()?;
 
-        let mut variants = Vec::new();
+        let mut constructors = Vec::new();
 
         self.consume(&TokenType::LBRACE, "Expected `{`")?;
 
         if !self.recognise(TokenType::RBRACE) {
             loop {
-                let name = match self.next()? {
-                    Spanned {
-                        value:
-                            Token {
-                                token: TokenType::IDENTIFIER(ident),
-                            },
-                        span,
-                    } => Spanned {
-                        span,
-                        value: self.symbols.symbol(ident),
-                    },
+                let (mut whole_span,constructor) =
+                    self.consume_get_symbol_and_span("Expected a constructor identifier")?;
 
-                    Spanned {
-                        span,
-                        value: Token { token },
-                        ..
-                    } => {
-                        let msg = format!("Expected an ident instead found {}", token);
-                        self.reporter.error(msg, span);
-                        return Err(());
-                    }
-                };
-
-                let mut inner = None;
+                let mut args = Spanned::new(Vec::new(), EMPTYSPAN);
 
                 if self.recognise(TokenType::LPAREN) {
-                    self.next()?;
-                    inner = Some(self.parse_type()?);
-                    self.consume(&TokenType::RPAREN, "Expected `(`")?;
+                    args.span = self.consume_get_span(&TokenType::LPAREN, "Expected `(`")?;
+                    loop {
+                        args.value.push(self.parse_type()?);
+
+                        if self.recognise(TokenType::COMMA) {
+                            self.next()?;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    let span = self.consume_get_span(&TokenType::RPAREN, "Expected `)`")?;
+                    whole_span = whole_span.to(span);
+                    args.span = args.span.to(span);
                 }
 
-                variants.push(EnumVariant { name, inner });
+                constructors.push(Spanned::new(
+                    EnumConstructor {
+                        con: constructor,
+                        args,
+                    },
+                    whole_span,
+                ));
 
                 if self.recognise(TokenType::COMMA) {
                     self.next()?;
@@ -406,12 +402,12 @@ impl<'a> Parser<'a> {
             }
         }
 
-        let close_span = self.consume_get_span(&TokenType::RBRACE, "Expected `{`")?;
+        let close_span = self.consume_get_span(&TokenType::RBRACE, "Expected `}`")?;
 
         Ok(Spanned {
             value: Enum {
                 name: ident,
-                variants,
+                constructors,
             },
             span: open_span.to(close_span),
         })
@@ -447,7 +443,7 @@ impl<'a> Parser<'a> {
                 value: Type::Nil,
                 span: self.consume_get_span(&TokenType::NIL, "Expected 'nil' ")?,
             })
-        } else if self.recognise(TokenType::RPAREN) {
+        } else if self.recognise(TokenType::LBRACKET) {
             self.next()?;
             let ty = self.parse_type()?;
             Ok(Spanned {
@@ -457,7 +453,7 @@ impl<'a> Parser<'a> {
         } else if self.recognise(TokenType::FUNCTION) {
             let open_span = self.consume_get_span(&TokenType::FUNCTION, "Expected 'fun' ")?;
 
-            self.consume(&TokenType::LPAREN, "Expected a \'(\'")?;
+            self.consume(&TokenType::LPAREN, "Expected a `(`")?;
             let mut param_ty = Vec::with_capacity(32);
 
             if !self.recognise(TokenType::RPAREN) {
@@ -472,7 +468,7 @@ impl<'a> Parser<'a> {
                 }
             }
 
-            let close_span = self.consume_get_span(&TokenType::RPAREN, "Expected  \')\'")?;
+            let close_span = self.consume_get_span(&TokenType::RPAREN, "Expected  `)`")?;
 
             if self.recognise(TokenType::FRETURN) {
                 self.next()?;
@@ -667,7 +663,7 @@ impl<'a> Parser<'a> {
         }
 
         let close_span =
-            self.consume_get_span(&TokenType::RBRACE, "Expected a \'}\' after block.")?;
+            self.consume_get_span(&TokenType::RBRACE, "Expected a `}` after block.")?;
         Ok(Spanned {
             span: open_span.to(close_span),
             value: Statement::Block(statements),
@@ -694,7 +690,7 @@ impl<'a> Parser<'a> {
         let expr = self.parse_expression()?;
 
         Ok(Spanned {
-            span: if self.parsing_match_arm {
+            span: if self.parsing_match_expression {
                 expr.span
             } else {
                 self.consume_get_span(&TokenType::SEMICOLON, "Expected ';' ")?
@@ -1169,7 +1165,7 @@ impl<'a> Parser<'a> {
 
         if !self.recognise(TokenType::RBRACE) {
             loop {
-                self.parsing_match_arm = true;
+                self.parsing_match_expression= true;
 
                 if self.recognise(TokenType::UNDERSCORE) {
                     seen_catch_all += 1;
@@ -1180,7 +1176,7 @@ impl<'a> Parser<'a> {
 
                     let body = self.parse_statement()?;
 
-                    self.parsing_match_arm = false;
+                    self.parsing_match_expression= false;
 
                     if seen_catch_all > 1 {
                         self.span_warn("`_` pattern is allready present", pattern.to(body.span));
@@ -1211,7 +1207,7 @@ impl<'a> Parser<'a> {
 
                 let body = self.parse_statement()?;
 
-                self.parsing_match_arm = false;
+                self.parsing_match_expression= false;
 
                 let span = pattern.span.to(body.span);
 

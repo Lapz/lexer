@@ -34,13 +34,12 @@ pub struct Class {
 #[derive(Debug, Clone)]
 pub struct Enum {
     pub name: Spanned<ItemName>,
-    pub variants: Vec<EnumVariant>,
+    pub constructors: Vec<Spanned<EnumConstructor>>,
 }
-
 #[derive(Debug, Clone)]
-pub struct EnumVariant {
-    pub name: Spanned<Symbol>,
-    pub inner: Option<Spanned<Type>>,
+pub struct EnumConstructor {
+    pub con: Spanned<Symbol>,
+    pub args: Spanned<Vec<Spanned<Type>>>,
 }
 
 #[derive(Debug, Clone)]

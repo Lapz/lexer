@@ -1,3 +1,4 @@
-fn main() {
-    print (5 - (3 - 1)) + -1;// expect:2
+class HashMap<K,V> {
+    keys:[K],
+    values:[V];
 }

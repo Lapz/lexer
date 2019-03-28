@@ -31,22 +31,22 @@ impl Infer {
             ),
         ); // For recursive types we need to add the empty enum
 
-        let mut variants = HashMap::with_capacity(_enum.value.variants.len());
+        // let mut variants = HashMap::with_capacity(_enum.value.variants.len());
 
-        for (i, variant) in _enum.value.variants.into_iter().enumerate() {
-            let inner = if let Some(ref ty) = variant.inner {
-                Some(self.trans_type(ty, ctx)?)
-            } else {
-                None
-            };
+        // for (i, variant) in _enum.value.variants.into_iter().enumerate() {
+        //     let inner = if let Some(ref ty) = variant.inner {
+        //         Some(self.trans_type(ty, ctx)?)
+        //     } else {
+        //         None
+        //     };
 
-            let v = Variant {
-                tag: i as u32,
-                inner,
-            };
+        //     let v = Variant {
+        //         tag: i as u32,
+        //         inner,
+        //     };
 
-            variants.insert(variant.name.value, v);
-        }
+        //     variants.insert(variant.name.value, v);
+        // }
 
         ctx.end_scope();
 
@@ -56,7 +56,7 @@ impl Infer {
                 generic_type_vars.clone(),
                 Box::new(Type::Enum {
                     name: _enum.value.name.value.name.value,
-                    variants,
+                    variants:HashMap::new(),
                 }),
             ),
         ); // Add the proper fully type checked enum
