@@ -10,6 +10,8 @@ fn me() -> Result<int,str> {
     }
     return Result::Err("You are not a person");
 }
+
+
 fn main() {
     let res = me();
 

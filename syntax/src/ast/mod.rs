@@ -96,6 +96,15 @@ pub struct FunctionParam {
 }
 
 #[derive(Debug, Clone)]
+pub enum Pattern {
+    Var(Spanned<Symbol>),
+    Or(Box<Spanned<Pattern>>, Box<Spanned<Pattern>>),
+    /// A construtor like Red(125,255,255)
+    /// A pattern var is a constructor with now args
+    Con(Spanned<Symbol>, Spanned<Vec<Spanned<Pattern>>>),
+}
+
+#[derive(Debug, Clone)]
 pub enum Expression {
     Array {
         items: Vec<Spanned<Expression>>,
@@ -170,7 +179,7 @@ pub enum Expression {
 
 #[derive(Debug, Clone)]
 pub struct MatchArm {
-    pub pattern: Option<Spanned<Expression>>,
+    pub pattern: Option<Spanned<Pattern>>,
     pub body: Spanned<Statement>,
     pub is_all: bool,
 }

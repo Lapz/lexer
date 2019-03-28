@@ -1,4 +1,10 @@
-class HashMap<K,V> {
-    keys:[K],
-    values:[V];
+class Person {
+    name:str,surname:str;
+}
+
+fn main() {
+    match me {
+        x => 10,
+        y => 10,
+    }
 }

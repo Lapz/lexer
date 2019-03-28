@@ -56,7 +56,7 @@ impl Infer {
                 generic_type_vars.clone(),
                 Box::new(Type::Enum {
                     name: _enum.value.name.value.name.value,
-                    variants:HashMap::new(),
+                    variants: HashMap::new(),
                 }),
             ),
         ); // Add the proper fully type checked enum
