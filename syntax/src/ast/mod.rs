@@ -100,7 +100,8 @@ pub enum Pattern {
     Var(Spanned<Symbol>),
     Or(Box<Spanned<Pattern>>, Box<Spanned<Pattern>>),
     /// A construtor like Red(125,255,255)
-    /// A pattern var is a constructor with now args
+    /// A pattern var is a constructor with no args
+    /// A litteral is 
     Con(Spanned<Symbol>, Spanned<Vec<Spanned<Pattern>>>),
 }
 
